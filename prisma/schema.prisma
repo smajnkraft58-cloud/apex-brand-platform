@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String   @default("Слава Милованов")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts      Post[]
+  mediaFiles MediaFile[]
+  tasks      Task[]
+  analytics  Analytics[]
+  aiChats    AiChat[]
+  templates  Template[]
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String    @default("")
+  content     String
+  status      String    @default("idea")
+  platform    String    @default("tg")
+  pillar      String    @default("expertise")
+  hashtags    String    @default("")
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  versions   PostVersion[]
+  mediaFiles PostMedia[]
+  tasks      Task[]
+}
+
+model PostVersion {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostMedia {
+  id          String    @id @default(cuid())
+  postId      String
+  mediaFileId String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaFile   MediaFile @relation(fields: [mediaFileId], references: [id], onDelete: Cascade)
+}
+
+model MediaFile {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String
+  size      Int
+  folder    String   @default("posts-tg")
+  tags      String   @default("")
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User        @relation(fields: [userId], references: [id])
+  posts  PostMedia[]
+}
+
+model Task {
+  id        String    @id @default(cuid())
+  title     String
+  done      Boolean   @default(false)
+  tag       String    @default("")
+  deadline  DateTime?
+  createdAt DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  postId String?
+  post   Post?  @relation(fields: [postId], references: [id])
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  platform    String
+  date        DateTime
+  subscribers Int      @default(0)
+  reach       Int      @default(0)
+  likes       Int      @default(0)
+  posts       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model AiChat {
+  id        String     @id @default(cuid())
+  title     String     @default("Новый чат")
+  createdAt DateTime   @default(now())
+
+  userId   String
+  user     User        @relation(fields: [userId], references: [id])
+  messages AiMessage[]
+}
+
+model AiMessage {
+  id        String   @id @default(cuid())
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  chatId String
+  chat   AiChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  content     String
+  platform    String   @default("tg")
+  type        String   @default("expert")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+}
